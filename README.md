@@ -102,12 +102,12 @@ When shadowing is enabled, the `password` field in the password and group file w
 | Group file           | `/etc/group`    | `<groupname>:<password>:<gid>:<users>`                                         |
 | Shadow password file | `/etc/shadow`   | `<username>:<password>:<last-changed>:<min>:<max>:<warn>:<inactive>:<expired>` |
 
-The `password` field in the shadow password file contains an encrypted passoword. Its format can be (see [`crypt`](https://man7.org/linux/man-pages/man3/crypt.3.html) in detail):
+The `password` field in the shadow password file contains an encrypted passoword. Its format can be:
 
 - `$id$salt$encrypted`
 - `$id$rounds=yyy$salt$encrypted` (since glibc 2.7)
 
-Here is an example,
+Here is an example, see [`crypt`](https://man7.org/linux/man-pages/man3/crypt.3.html) in detail:
 
 ```c
 // MD5 with a salt 'mysalt'
