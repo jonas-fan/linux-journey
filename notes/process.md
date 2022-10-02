@@ -34,36 +34,115 @@ The following table briefly describes the sections:
 On Intel x86-64 architecture, a process's virtual memory looks like (see [Linux kernel mm (x86_64)](https://www.kernel.org/doc/Documentation/x86/x86_64/mm.txt) for more details):
 
 ```
-0xffffffffffffffff +---------------+
-                   |               |
-     128 TiB       |    kernel     |  shared between
-   (2^47 bytes)    |               |  all processes
-                   |               |
-0xffff7fffffffffff |---------------|
-                   |               |
-    ~16M TiB       | non-canonical |
-                   |               |
-0x00007fffffffffff |---------------|
-                   |   argv, env   |
-                   |---------------|
-                   |               |
-                   |    stack      |
-                   |               |
-                   |---------------|  <- top of stack
-                   |               |
-                   |               |
-     128 TiB       |               |
-   (2^47 bytes)    |---------------|  <- program break
-                   |               |
-                   |     heap      |
-                   |               |
-                   |---------------|  <- end
-                   |     bss       |
-                   |---------------|  <- edata
-                   |     data      |
-                   |---------------|  <- etext
-                   |     text      |
-0x0000000000400000 |---------------|
-                   |               |
-0x0000000000000000 |---------------|
+0xffffffffffffffff  +---------------+
+                    |               |
+     128 TiB        |    kernel     |  shared between all processes
+   (2^47 bytes)     |               |  all processes
+                    |               |
+0xffff7fffffffffff  |---------------|
+                    |               |
+    ~16M TiB        | non-canonical |
+                    |               |
+0x00007fffffffffff  |---------------|
+                    |   argv, env   |
+                    |---------------|
+                    |               |
+                    |    stack      |
+                    |               |
+                    |---------------|  <- top of stack
+                    |               |
+                    |               |
+     128 TiB        |               |
+   (2^47 bytes)     |---------------|  <- program break
+                    |               |
+                    |     heap      |
+                    |               |
+                    |---------------|  <- end
+                    |     bss       |
+                    |---------------|  <- edata
+                    |     data      |
+                    |---------------|  <- etext
+                    |     text      |
+0x0000000000400000  |---------------|
+                    |               |
+0x0000000000000000  +---------------+
 ```
+
+## Process creation and termination
+
+The `fork()`-like system calls are used to create child processes based on the current running process.
+
+```
+  Parent               Child
+    |
+    |
+  fork() ----create------+
+    |                    |
+    |                 execve()
+    |                    |
+    |                    |
+    |                    |
+  wait() <---status--- exit()
+    |
+    |
+    v
+```
+
+`fork()`, `vfork()`, and `clone()` will eventually call `do_fork()` in kernel space. A forked process shares parts of the resources of the parent. A child process created by `fork()` or `vfork()` starts from the forking point, a child process created by `clone()` starts from a function.
+
+It's worth noting that we are unable to rely on the order in which the parent and child are next scheduled to use CPU resource.
+
+A parent process exits, its child processes will be orphan, which will be managed by `init` process (pid 1). Once a child process terminates, it will pass a signal `SIGCHLD` (or `SIGCLD`) to its parent process, and then will become a zombie. A `wait()`-like system call is required to retrieve the status returned from the zombie and reclaim the resource of the zombie.
+
+The `wait()` system call and variants are as below:
+
+- `wait()`
+- `waitpid()`
+- `waittid()`
+
+The following macros can be used to investigate termination status.
+
+| Call                   | Description                                                             |
+|------------------------|-------------------------------------------------------------------------|
+| `WIFEXITED(status)`    | test if normal termination                                              |
+| `WIFSIGNALED(status)`  | test if killed by signal, `WTERMSIG(status)` returns the signal number  |
+| `WIFSTOPPED(status)`   | test if stopped by signal, `WSTOPSIG(status)` returns the signal number |
+| `WIFCONTINUED(status)` | test if continued by signal                                             |
+
+Bit fields of termination status.
+
+```
+Normal termination:
+15              8 7               0
++----------------+----------------+
+|  exit status   |        0       |
++----------------+----------------+
+
+
+Killed by signal:
+15              8 7               0
++----------------+----------------+
+|       0        | |   signal     |
++----------------+----------------+
+                  +---> core dumped flag
+
+Stopped by signal:
+15              8 7               0
++----------------+----------------+
+|     signal     |      0x7F      |
++----------------+----------------+
+
+
+Continued by signal:
+15              8 7               0
++----------------+----------------+
+|      0xFF      |      0xFF      |
++----------------+----------------+
+```
+
+An explicit call of `exit()` can be used to termiate the current process, it will do resources cleanup, flush buffers, and call registered exit handlers, then invoke `_exit()` (UNIX-specific).
+
+When a process terminates, registered exit handlers will be executed in reverse order as a stack. They are registered by the following:
+
+- `atexit()` (C standard)
+- `on_exit()` (glibc extension)
