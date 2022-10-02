@@ -1,6 +1,11 @@
 # Process
 
-## Binary format
+- [Executable binary format](#executable-binary-format)
+- [Virtual memory layout](#virtual-memory-layout)
+- [Process creation and termination](#process-creation-and-termination)
+- [Program execution](#program-execution)
+
+## Executable binary format
 
 Processes are running executables. The binary format of executable is `Executable and Linking Format (ELF)`, which is the replacement of legacy formats, such as `Assembler output (a.out)` and `Common Object File Format (COFF)`.
 
@@ -11,7 +16,7 @@ $ file $(which file)
     BuildID[sha1]=895077a840385f977d10a2402d58f8b4edc8bd48, stripped
 ```
 
-## Memory layout
+## Virtual memory layout
 
 Program consists of sections. Let's have a look:
 
@@ -146,3 +151,18 @@ When a process terminates, registered exit handlers will be executed in reverse 
 
 - `atexit()` (C standard)
 - `on_exit()` (glibc extension)
+
+## Program execution
+
+With `exec()` family functions, a program can replace its running instance with an `ELF` file or a script, including customized arguments and environments. Because that is replaceing, the process id will not be changed.
+
+A script is able to specifically indicate an interrupter by writting `#!<interrupt-path> <optional-arg>` in the first line of itself.
+
+| Call       | Name (-, p) | Argument (v, l) | Environment (e, -) |
+|------------|-------------|-----------------|--------------------|
+| `execve()` | pathname    | array           | envp               |
+| `execle()` | pathname    | list            | envp               |
+| `execv()`  | pathname    | array           | caller's environ   |
+| `execl()`  | pathname    | list            | caller's environ   |
+| `execvp()` | filename    | array           | caller's environ   |
+| `execlp()` | filename    | list            | caller's environ   |
