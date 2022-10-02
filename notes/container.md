@@ -15,7 +15,7 @@ container  |       CLI / Daemon       |
 management |  (dockerd, crictl, ...)  |  -----+
            +--------------------------+       |
                         |                     |
-                     CRI spec           non-CRI sepc
+                     CRI spec           non-CRI spec
                         |                     |
                         v                     |
            +--------------------------+       |
