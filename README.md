@@ -9,6 +9,6 @@ Learning notes for Linux. Most are from [The Linux Programming Interface](https:
 - [File I/O](/notes/file-io.md)
 - [Process](/notes/process.md)
 - [Times and Dates](/notes/times-and-dates.md)
-- [Transport Layer Security (TLS)](/note/transport-layer-security.md)
+- [Transport Layer Security (TLS)](/notes/transport-layer-security.md)
 - [Troubleshoot](/notes/troubleshoot.md)
 - [Users and Groups](/notes/users-and-groups.md)
