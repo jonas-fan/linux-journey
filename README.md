@@ -1,6 +1,6 @@
 # Linux Journey
 
-Learning notes for Linux.
+Learning notes for Linux. Most are from [The Linux Programming Interface](https://man7.org/tlpi/index.html).
 
 ## Outline
 
