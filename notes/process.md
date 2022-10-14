@@ -42,7 +42,7 @@ On Intel x86-64 architecture, a process's virtual memory looks like (see [Linux 
 0xffffffffffffffff  +---------------+
                     |               |
      128 TiB        |    kernel     |  shared between all processes
-   (2^47 bytes)     |               |  all processes
+   (2^47 bytes)     |               |
                     |               |
 0xffff7fffffffffff  |---------------|
                     |               |
